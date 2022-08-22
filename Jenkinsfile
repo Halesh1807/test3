@@ -1,29 +1,24 @@
-pipeline {
-    
-    agent none
+pipeline{
+    agent any
     tools {
         maven 'Maven'
     }
     stages {
-        stage('Checkout') {
-            agent {label 'master'}
+        stage ('Build') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Halesh1807/test3.git']]])
+                sh 'mvn clean package'
+            }
+            post{
+                success {
+                    echo "Archiving the Artifacts"
+                    archiveArtifacts artifacts: '**/target/*.war'
+                }
             }
         }
-        
-        stage('build') {
-            agent {label 'sl2'}
-            steps {
-                sh 'mvn clean install'
-            }
-        }
-        
-        stage('Deploy to tomcat server') {
-            agent {label 'sl2'}
-            steps {
-                deploy adapters: [tomcat9(credentialsId: 'b4410129-0d61-438c-a6eb-1ba62f1ec3be', path: '', url: 'http://15.206.173.118:8090/')], contextPath: null, war: '**/*.war'
-            }
+        stage ('Deployto tomcat server') {
+            steps{
+                deploy adapters: [tomcat9(credentialsId: 'b4410129-0d61-438c-a6eb-1ba62f1ec3be', path: '', url: 'http://15.206.173.118:8090/')], contextPath: 'sample', war: '**/*.war'
+            }            
         }
     }
 }
